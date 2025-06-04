@@ -55,7 +55,7 @@ def load_data(directory):
 def main():
     if len(sys.argv) > 2:
         sys.exit("Usage: python degrees.py [directory]")
-    directory = sys.argv[1] if len(sys.argv) == 2 else "large" 
+    directory = sys.argv[1] if len(sys.argv) == 2 else "large"
 
     # Load data from files into memory
     print("Loading data...")
@@ -129,15 +129,46 @@ def shortest_path(source, target):
     # Keep track of number of states explored
     num_explored = 0
 
-    start = source
-
     # Initialize frontier to just the starting position
-    start = Node(state=start, parent=None, action=None)
+    start_node = Node(state=source, parent=None, action=None)
     frontier = StackFrontier()
-    frontier.add(start)
+    frontier.add(start_node)
 
-    # TODO
-    # raise NotImplementedError
+    # Initialize an empty explored set
+    explored = set()
+
+    while True:
+        # If nothing left in frontier, then no path
+        if frontier.empty():
+            return None
+
+        # Choose a node from the frontier
+        node = frontier.remove()
+        num_explored += 1
+
+        print(f"Exploring node: {node.state}, explored: {num_explored}")
+
+        # If node's state is the goal, then we have a solution
+        if node.state == str(target):
+            path = []
+            while node.parent is not None:
+                path.append((node.action, node.state))
+                node = node.parent
+            path.reverse()
+            return path
+
+        # Mark the node as explored
+        explored.add(str(node.state))
+
+        # Add neighbors to the frontier
+        for movie_id, person_id in neighbors_for_person(str(node.state)):
+            if not frontier.contains_state(person_id) and person_id not in explored:
+                child = Node(state=person_id, parent=node, action=movie_id)
+                frontier.add(child)
+                print(
+                    f"Adding nodes: parent id: {node.state}, added id: {child.state}"
+                    f" stared in movie {child.action}"
+                )
 
 
 def person_id_for_name(name):
@@ -179,8 +210,9 @@ def neighbors_for_person(person_id):
     return neighbors
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
 
-load_data("0.Search/degrees/small")
-path = shortest_path(193, 129)
+# load_data("0.Search/degrees/small")
+# path = shortest_path(102, 596520)
+# print(f"Here is the path: {path}")
