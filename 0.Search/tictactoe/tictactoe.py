@@ -7,6 +7,7 @@ import math
 X = "X"
 O = "O"
 EMPTY = None
+E = EMPTY
 
 board = [[EMPTY, EMPTY, EMPTY], [EMPTY, EMPTY, EMPTY], [EMPTY, EMPTY, EMPTY]]
 
@@ -123,7 +124,7 @@ def terminal(board):
     return True
 
 
-def utility(board):
+def utility(board)->int:
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
@@ -135,9 +136,69 @@ def utility(board):
     else:
         return 0  # No winner, so utility is 0 (tie or ongoing game)
 
+def max_value(board)->int:
+    if terminal(board):
+        return utility(board)
+    v = -15
+    for action in actions(board):
+        res_board = result(board,action)
+        v = max(v,min_value(res_board))
+    return v
+
+def min_value(board)->int:
+    if terminal(board):
+        return utility(board)
+    v = 15
+    for action in actions(board):
+        res_board = result(board,action)
+        v = min(v,max_value(res_board))
+    return v
+
 
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
-    raise NotImplementedError
+    curent_player = player(board)
+    goal = None
+
+    if curent_player == X:
+        max = max_value(board)
+    else:
+        min = min_value(board)   
+    
+    # if curent_player == X:
+    #     goal = 1
+    # else:
+    #     goal = -1
+    # posible_actions = actions(board)
+    
+    # curent_board = board
+    # action_scores = set()
+    # min_score = 15
+    # max_score = -15
+    # for action in posible_actions:
+    #     r = result(curent_board, action)
+    #     score = utility(r)
+    #     pair = (action,score)
+    #     action_scores.add(pair)
+    #     if score < min_score:
+    #         min_aciton_score = (action, score)
+    #     if score > max_score:
+    #         max_aciton_score = (action, score)                
+    
+    # if curent_player == X:
+    #     return max_aciton_score[0]
+    # else: # curent_player == O
+    #     return min_aciton_score[0]
+    
+    # 
+    a=1
+
+test_board = [[X, E, E], 
+              [O, X, O], 
+              [O, X, O]]
+minimax(test_board)
+
+
+
