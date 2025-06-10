@@ -61,6 +61,10 @@ def result(board, action):
     Returns the board that results from making move (i, j) on the board.
     """
     i, j = action
+
+    if i < 0 or i > 2 or j < 0 or j > 2:
+        raise ValueError("Out-of-bounds move")
+
     if board[i][j] is not EMPTY:
         raise ValueError("Invalid action: Cell is already occupied.")
 
@@ -124,7 +128,7 @@ def terminal(board):
     return True
 
 
-def utility(board)->int:
+def utility(board) -> int:
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
@@ -136,69 +140,99 @@ def utility(board)->int:
     else:
         return 0  # No winner, so utility is 0 (tie or ongoing game)
 
-def max_value(board)->int:
+
+def max_value(board) -> int:
     if terminal(board):
         return utility(board)
     v = -15
     for action in actions(board):
-        res_board = result(board,action)
-        v = max(v,min_value(res_board))
+        res_board = result(board, action)
+        v = max(v, min_value(res_board))
     return v
 
-def min_value(board)->int:
+
+def min_value(board) -> int:
     if terminal(board):
         return utility(board)
     v = 15
     for action in actions(board):
-        res_board = result(board,action)
-        v = min(v,max_value(res_board))
+        res_board = result(board, action)
+        v = min(v, max_value(res_board))
     return v
 
 
-def minimax(board):
+def minimax_fail(board):
     """
     Returns the optimal action for the current player on the board.
     """
     curent_player = player(board)
-    goal = None
+
+    posible_actions = actions(board)
+    curent_board = board
+    action_scores = set()
+
+    min_score = 2
+    max_score = -2
+
+    for action in posible_actions:
+        res_board = result(curent_board, action)
+        if curent_player == X:
+            score = max_value(res_board)
+        else:
+            score = min_value(res_board)
+
+        pair = (action, score)
+        action_scores.add(pair)
+        if score < min_score:
+            min_aciton_score = (action, score)
+        if score > max_score:
+            max_aciton_score = (action, score)
 
     if curent_player == X:
-        max = max_value(board)
+        return max_aciton_score[0]
+    else:  # curent_player == O
+        return min_aciton_score[0]
+
+
+def minimax(board):
+    """
+    Returns the optimal action for the current player on the board
+    using the minimax algorithm.
+    """
+    # If the game is over, there are no moves to make
+    if terminal(board):
+        return None
+
+    # Determine which player's turn it is
+    cur_player = player(board)
+    if cur_player is None:
+        return None
+    best_action = None
+    # If it's X's turn, maximize the score
+    if cur_player == X:
+        best_score = -math.inf
+        # Evaluate all possible actions
+        for action in actions(board):
+            # Simulate the result of taking this action and get the score
+            # from the minimizing player
+            score = min_value(result(board, action))
+            # If this action yields a better score, update best_score
+            # and best_action
+            if score > best_score:
+                best_score = score
+                best_action = action
     else:
-        min = min_value(board)   
-    
-    # if curent_player == X:
-    #     goal = 1
-    # else:
-    #     goal = -1
-    # posible_actions = actions(board)
-    
-    # curent_board = board
-    # action_scores = set()
-    # min_score = 15
-    # max_score = -15
-    # for action in posible_actions:
-    #     r = result(curent_board, action)
-    #     score = utility(r)
-    #     pair = (action,score)
-    #     action_scores.add(pair)
-    #     if score < min_score:
-    #         min_aciton_score = (action, score)
-    #     if score > max_score:
-    #         max_aciton_score = (action, score)                
-    
-    # if curent_player == X:
-    #     return max_aciton_score[0]
-    # else: # curent_player == O
-    #     return min_aciton_score[0]
-    
-    # 
-    a=1
-
-test_board = [[X, E, E], 
-              [O, X, O], 
-              [O, X, O]]
-minimax(test_board)
-
-
-
+        # If it's O's turn, minimize the score
+        best_score = math.inf
+        # Evaluate all possible actions
+        for action in actions(board):
+            # Simulate the result of taking this action and get the score
+            # from the maximizing player
+            score = max_value(result(board, action))
+            # If this action yields a lower score, update best_score
+            # and best_action
+            if score < best_score:
+                best_score = score
+                best_action = action
+    # Return the action that leads to the best score for the current player
+    return best_action
