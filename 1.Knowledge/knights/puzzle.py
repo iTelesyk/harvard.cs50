@@ -11,14 +11,15 @@ CKnave = Symbol("C is a Knave")
 
 A_statement = Symbol("A said some statement")
 B_statement = Symbol("B said some statement")
+C_statement = Symbol("C said some statement")
 
 # Puzzle 0
 # A says "I am both a knight and a knave."
 knowledge0 = And(
     Biconditional(Not(AKnight), AKnave),
-    Biconditional(Not(A_statement),AKnave),
-    Biconditional(A_statement,AKnight),
-    Biconditional(A_statement,And(AKnight, AKnave)),
+    Biconditional(Not(A_statement), AKnave),
+    Biconditional(A_statement, AKnight),
+    Biconditional(A_statement, And(AKnight, AKnave)),
 )
 
 # Puzzle 1
@@ -26,13 +27,11 @@ knowledge0 = And(
 # B says nothing.
 knowledge1 = And(
     Biconditional(Not(AKnight), AKnave),
-    Biconditional(Not(A_statement),AKnave),
-    Biconditional(A_statement,AKnight),
-
+    Biconditional(Not(A_statement), AKnave),
+    Biconditional(A_statement, AKnight),
     Biconditional(Not(BKnight), BKnave),
-    Biconditional(Not(B_statement),BKnave),
-    Biconditional(B_statement,BKnight),
-
+    Biconditional(Not(B_statement), BKnave),
+    Biconditional(B_statement, BKnight),
     Biconditional(A_statement, And(AKnave, BKnave)),
 )
 
@@ -41,15 +40,13 @@ knowledge1 = And(
 # B says "We are of different kinds."
 knowledge2 = And(
     Biconditional(Not(AKnight), AKnave),
-    Biconditional(Not(A_statement),AKnave),
-    Biconditional(A_statement,AKnight),
-
+    Biconditional(Not(A_statement), AKnave),
+    # Biconditional(A_statement,AKnight),
     Biconditional(Not(BKnight), BKnave),
-    Biconditional(Not(B_statement),BKnave),
-    Biconditional(B_statement,BKnight),
-
-    Biconditional(A_statement, Or(And(AKnight, BKnight),And(AKnave, BKnave))),
-    Biconditional(B_statement, Or(And(AKnight, BKnave),And(AKnave, BKnight))),
+    Biconditional(Not(B_statement), BKnave),
+    # Biconditional(B_statement,BKnight),
+    Biconditional(A_statement, Or(And(AKnight, BKnight), And(AKnave, BKnave))),
+    Biconditional(B_statement, Or(And(AKnight, BKnave), And(AKnave, BKnight))),
 )
 
 # Puzzle 3
@@ -58,7 +55,19 @@ knowledge2 = And(
 # B says "C is a knave."
 # C says "A is a knight."
 knowledge3 = And(
-    # TODO
+    Biconditional(Not(AKnight), AKnave),
+    # Biconditional(Not(A_statement),AKnave),
+    Biconditional(A_statement, AKnight),
+    Biconditional(Not(BKnight), BKnave),
+    # Biconditional(Not(B_statement),BKnave),
+    Biconditional(B_statement, BKnight),
+    Biconditional(Not(CKnight), CKnave),
+    # Biconditional(Not(C_statement),CKnave),
+    Biconditional(C_statement, CKnight),
+    Biconditional(A_statement, Or(AKnight, AKnave)),
+    Biconditional(B_statement, And(A_statement, AKnave)),
+    Biconditional(B_statement, CKnave),
+    Biconditional(C_statement, AKnight),
 )
 
 
@@ -68,7 +77,7 @@ def main():
         ("Puzzle 0", knowledge0),
         ("Puzzle 1", knowledge1),
         ("Puzzle 2", knowledge2),
-        ("Puzzle 3", knowledge3)
+        ("Puzzle 3", knowledge3),
     ]
     for puzzle, knowledge in puzzles:
         print(puzzle)
