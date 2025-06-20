@@ -101,7 +101,7 @@ class Sentence:
     def __str__(self):
         return f"{self.cells} = {self.count}"
 
-    def known_mines(self):
+    def known_mines(self) -> set[tuple]:
         """
         Returns the set of all cells in self.cells known to be mines.
         """
@@ -110,7 +110,7 @@ class Sentence:
         else:
             return set()
 
-    def known_safes(self):
+    def known_safes(self) -> set[tuple]:
         """
         Returns the set of all cells in self.cells known to be safe.
         """
@@ -162,6 +162,22 @@ class MinesweeperAI:
         # List of sentences about the game known to be true
         self.knowledge = []
 
+    def list_nearby_cells(self, cell) -> set():
+        nearby_cells = set()
+
+        # Loop over all cells within one row and column
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+
+                # Ignore the cell itself
+                if (i, j) == cell:
+                    continue
+
+                # Update count if cell in bounds and is mine
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    nearby_cells.add((i, j))
+        return nearby_cells
+
     def mark_mine(self, cell):
         """
         Marks a cell as a mine, and updates all knowledge
@@ -195,7 +211,36 @@ class MinesweeperAI:
             5) add any new sentences to the AI's knowledge base
                if they can be inferred from existing knowledge
         """
-        raise NotImplementedError
+        # 1) mark the cell as a move that has been made
+        self.moves_made.add(cell)
+
+        # 2) mark the cell as a move
+        self.mark_safe(cell)
+
+        # 3) add a new sentence to the AI's knowledge base
+        # based on the value of `cell` and `count`
+        nearby_cells = self.list_nearby_cells(cell)
+        new_sentence = Sentence(cells=nearby_cells, count=count)
+        self.knowledge.append(new_sentence)
+        print(f"Added new s: {new_sentence}")
+
+        # 4) mark any additional cells as safe or as mines
+        # if it can be concluded based on the AI's knowledge base
+        change_was_made = True
+        while change_was_made:
+            change_was_made = False
+            for sentence in self.knowledge:
+                know_safes = sentence.known_safes()
+                for cell in set(know_safes):
+                    if cell not in self.safes:
+                        self.mark_safe(cell)
+                        change_was_made = True
+                know_mines = sentence.known_mines()
+                for cell in set(know_mines):
+                    if cell not in self.mines:
+                        self.mark_mine(cell)
+                        change_was_made = True
+        # a=1
 
     def make_safe_move(self):
         """
