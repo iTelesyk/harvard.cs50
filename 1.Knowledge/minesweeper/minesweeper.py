@@ -240,7 +240,6 @@ class MinesweeperAI:
                     if cell not in self.mines:
                         self.mark_mine(cell)
                         change_was_made = True
-        # a=1
 
     def make_safe_move(self):
         """
