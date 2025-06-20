@@ -159,10 +159,19 @@ class MinesweeperAI:
         self.mines = set()
         self.safes = set()
 
+        self.blanc_cells = self._populate_blancs()
+
         # List of sentences about the game known to be true
         self.knowledge = []
 
-    def list_nearby_cells(self, cell) -> set():
+    def _populate_blancs(self) -> set[tuple]:
+        cells = set()
+        for i in range(self.height):
+            for j in range(self.width):
+                cells.add((i, j))
+        return cells
+
+    def list_nearby_cells(self, cell) -> set:
         nearby_cells = set()
 
         # Loop over all cells within one row and column
@@ -241,7 +250,7 @@ class MinesweeperAI:
                         self.mark_mine(cell)
                         change_was_made = True
 
-    def make_safe_move(self):
+    def make_safe_move(self) -> tuple:
         """
         Returns a safe cell to choose on the Minesweeper board.
         The move must be known to be safe, and not already a move
@@ -250,7 +259,18 @@ class MinesweeperAI:
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        raise NotImplementedError
+        if len(self.safes) > 0:
+            # Calculate the union of moves_made and mines
+            explored_or_mined = self.moves_made.union(self.mines)
+            # Find elements in safes that are not in explored_or_mined
+            available_safes = self.safes.difference(explored_or_mined)
+            # If there are any such elements, pick one (e.g., the first one)
+            if available_safes:
+                return next(iter(available_safes))
+            else:
+                return None
+        else:
+            return None
 
     def make_random_move(self):
         """
@@ -259,8 +279,11 @@ class MinesweeperAI:
             1) have not already been chosen, and
             2) are not known to be mines
         """
-        raise NotImplementedError
+        # Remove cells that have already been played, flagged as mines, or safe
+        unavailable = self.moves_made | self.mines | self.safes
+        # Remove all unavailable cells from blanc_cells
+        self.blanc_cells = self.blanc_cells.difference(unavailable)
 
-
-m = Minesweeper()
-a = 1
+        random_cell = random.choice(list(self.blanc_cells))
+        print(f"Picked a random cell {random_cell}")
+        return random_cell
