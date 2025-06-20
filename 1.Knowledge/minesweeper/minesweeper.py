@@ -171,6 +171,26 @@ class MinesweeperAI:
                 cells.add((i, j))
         return cells
 
+    def _clean_knowledge(self):
+        for s in list(self.knowledge):
+            if s.count > len(s.cells):
+                raise ValueError
+            if len(s.cells) == 0:
+                self.knowledge.remove(s)
+
+    def _print_knowledge(self):
+        
+        print(f"Moves made: {len(self.moves_made)}")
+        print(f"Safe moves: {self.safes}")
+        print(f"Known mines: {self.mines}")
+        print(f"Current knowledge base:")
+        for s in self.knowledge:
+            print(s)
+
+    def _add_sentence_to_knowledge(self, new_sentence: Sentence):
+        if not (new_sentence in self.knowledge):
+            self.knowledge.append(new_sentence)
+
     def list_nearby_cells(self, cell) -> set:
         nearby_cells = set()
 
@@ -224,31 +244,67 @@ class MinesweeperAI:
         self.moves_made.add(cell)
 
         # 2) mark the cell as a move
-        self.mark_safe(cell)
+        # self.mark_safe(cell)
 
         # 3) add a new sentence to the AI's knowledge base
         # based on the value of `cell` and `count`
         nearby_cells = self.list_nearby_cells(cell)
-        new_sentence = Sentence(cells=nearby_cells, count=count)
-        self.knowledge.append(new_sentence)
-        print(f"Added new s: {new_sentence}")
+
+        know_mines_and_safes = self.mines | self.safes
+        cell_to_consider = nearby_cells.difference(know_mines_and_safes)
+
+        if len(cell_to_consider) > 0:
+            new_sentence = Sentence(cells=cell_to_consider, count=count)
+            self._add_sentence_to_knowledge(new_sentence)
+            print(f"Added new sentence: {new_sentence}")
 
         # 4) mark any additional cells as safe or as mines
         # if it can be concluded based on the AI's knowledge base
-        change_was_made = True
-        while change_was_made:
-            change_was_made = False
+        is_knowlendge_changed = True
+        while is_knowlendge_changed:
+            is_knowlendge_changed = False
+            self._clean_knowledge()
+
+            self._print_knowledge()
             for sentence in self.knowledge:
                 know_safes = sentence.known_safes()
                 for cell in set(know_safes):
                     if cell not in self.safes:
                         self.mark_safe(cell)
-                        change_was_made = True
+                        is_knowlendge_changed = True
                 know_mines = sentence.known_mines()
                 for cell in set(know_mines):
                     if cell not in self.mines:
                         self.mark_mine(cell)
-                        change_was_made = True
+                        is_knowlendge_changed = True
+
+            # 5) draw conclusions from
+            # if sentence is 1 cell long, than we solved it
+            for sentence in list(self.knowledge):
+                if len(sentence.cells) == 1:
+                    only_cell = next(iter(sentence.cells))
+                    if sentence.count == 0:
+                        self.mark_safe(only_cell)
+                    if sentence.count == 1:
+                        self.mark_mine(only_cell)
+
+            for s in list(self.knowledge):
+                for other_s in list(self.knowledge):
+                    if s != other_s and len(other_s.cells) != 0 and len(s.cells) != 0:
+                        s_cells = s.cells
+                        s_count = s.count
+                        other_cells = other_s.cells
+                        other_count = other_s.count
+                        if other_cells.issubset(s_cells):
+                            print(f"Set: {s}")
+                            print(f"Subset: {other_s}")
+                            deducted_sentence = Sentence(
+                                s_cells - other_cells, s_count - other_count
+                            )
+                            print(f"Deducted sentence: {deducted_sentence}")
+                            self._add_sentence_to_knowledge(deducted_sentence)
+                            # TODO: line below causes infinite loop
+                            is_knowlendge_changed = True
 
     def make_safe_move(self) -> tuple:
         """
@@ -266,7 +322,9 @@ class MinesweeperAI:
             available_safes = self.safes.difference(explored_or_mined)
             # If there are any such elements, pick one (e.g., the first one)
             if available_safes:
-                return next(iter(available_safes))
+                chosen_move = next(iter(available_safes))
+                print(f"I pick this safe cell: {chosen_move}")
+                return chosen_move
             else:
                 return None
         else:
