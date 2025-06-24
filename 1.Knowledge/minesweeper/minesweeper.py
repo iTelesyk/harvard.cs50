@@ -127,8 +127,8 @@ class Sentence:
         if cell in self.cells:
             self.cells.remove(cell)
             self.count -= 1
-        else:
-            pass
+            if self.count < 0:
+                raise ValueError(f"Sentence {self}, cell: {cell}")
 
     def mark_safe(self, cell):
         """
@@ -137,8 +137,6 @@ class Sentence:
         """
         if cell in self.cells:
             self.cells.remove(cell)
-        else:
-            pass
 
 
 class MinesweeperAI:
@@ -171,24 +169,31 @@ class MinesweeperAI:
                 cells.add((i, j))
         return cells
 
-    def _clean_knowledge(self):
-        for s in list(self.knowledge):
-            if s.count > len(s.cells):
-                raise ValueError
-            if len(s.cells) == 0:
-                self.knowledge.remove(s)
+    def _remove_empty_sentence(self, sentence):
+        if len(sentence.cells) == 0:
+            self.knowledge.remove(sentence)
 
     def _print_knowledge(self):
-        
-        print(f"Moves made: {len(self.moves_made)}")
-        print(f"Safe moves: {self.safes}")
+        """
+        Prints the current knowledge base of the AI.
+        """
+        print(f"Moves made: {(self.moves_made)}")
+        print(f"Safe moves: {(self.safes)}")
         print(f"Known mines: {self.mines}")
+        explored_or_mined = self.moves_made | self.mines
+        available_safes = self.safes - explored_or_mined
+        print(f"Available moves: {available_safes}")
         print(f"Current knowledge base:")
         for s in self.knowledge:
             print(s)
 
     def _add_sentence_to_knowledge(self, new_sentence: Sentence):
-        if not (new_sentence in self.knowledge):
+        is_unique = True
+        for sentence in self.knowledge:
+            if sentence == new_sentence:
+                is_unique = False
+                break
+        if is_unique:
             self.knowledge.append(new_sentence)
 
     def list_nearby_cells(self, cell) -> set:
@@ -244,29 +249,37 @@ class MinesweeperAI:
         self.moves_made.add(cell)
 
         # 2) mark the cell as a move
-        # self.mark_safe(cell)
+        self.mark_safe(cell)
 
         # 3) add a new sentence to the AI's knowledge base
         # based on the value of `cell` and `count`
         nearby_cells = self.list_nearby_cells(cell)
 
-        know_mines_and_safes = self.mines | self.safes
-        cell_to_consider = nearby_cells.difference(know_mines_and_safes)
+        unknown_nearby_cells = []
+        nearby_count = count
+        for cell in nearby_cells:
+            if not (cell in self.safes):
+                unknown_nearby_cells.append(cell)
+            if cell in self.mines:
+                nearby_count = count - 1
 
-        if len(cell_to_consider) > 0:
-            new_sentence = Sentence(cells=cell_to_consider, count=count)
+        if len(unknown_nearby_cells) > 0:
+            new_sentence = Sentence(cells=unknown_nearby_cells, count=nearby_count)
             self._add_sentence_to_knowledge(new_sentence)
-            print(f"Added new sentence: {new_sentence}")
+            print(f"Added new sentence by click: {new_sentence}.")
+            orig_s = Sentence(cells=nearby_cells, count=count)
+            if len(new_sentence.cells) < len(orig_s.cells):
+                print(f"The original should've been {orig_s}")
 
         # 4) mark any additional cells as safe or as mines
         # if it can be concluded based on the AI's knowledge base
         is_knowlendge_changed = True
         while is_knowlendge_changed:
             is_knowlendge_changed = False
-            self._clean_knowledge()
+            # self._clean_knowledge()
 
             self._print_knowledge()
-            for sentence in self.knowledge:
+            for sentence in list(self.knowledge):
                 know_safes = sentence.known_safes()
                 for cell in set(know_safes):
                     if cell not in self.safes:
@@ -277,7 +290,7 @@ class MinesweeperAI:
                     if cell not in self.mines:
                         self.mark_mine(cell)
                         is_knowlendge_changed = True
-
+                self._remove_empty_sentence(sentence)
             # 5) draw conclusions from
             # if sentence is 1 cell long, than we solved it
             for sentence in list(self.knowledge):
@@ -285,11 +298,14 @@ class MinesweeperAI:
                     only_cell = next(iter(sentence.cells))
                     if sentence.count == 0:
                         self.mark_safe(only_cell)
+                        is_knowlendge_changed = True
                     if sentence.count == 1:
                         self.mark_mine(only_cell)
+                        is_knowlendge_changed = True
+                self._remove_empty_sentence(sentence)
 
             for s in list(self.knowledge):
-                for other_s in list(self.knowledge):
+                for other_s in (self.knowledge):
                     if s != other_s and len(other_s.cells) != 0 and len(s.cells) != 0:
                         s_cells = s.cells
                         s_count = s.count
@@ -303,7 +319,6 @@ class MinesweeperAI:
                             )
                             print(f"Deducted sentence: {deducted_sentence}")
                             self._add_sentence_to_knowledge(deducted_sentence)
-                            # TODO: line below causes infinite loop
                             is_knowlendge_changed = True
 
     def make_safe_move(self) -> tuple:
@@ -317,9 +332,9 @@ class MinesweeperAI:
         """
         if len(self.safes) > 0:
             # Calculate the union of moves_made and mines
-            explored_or_mined = self.moves_made.union(self.mines)
+            explored_or_mined = self.moves_made | self.mines
             # Find elements in safes that are not in explored_or_mined
-            available_safes = self.safes.difference(explored_or_mined)
+            available_safes = self.safes - explored_or_mined
             # If there are any such elements, pick one (e.g., the first one)
             if available_safes:
                 chosen_move = next(iter(available_safes))
