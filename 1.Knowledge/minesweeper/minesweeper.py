@@ -101,7 +101,7 @@ class Sentence:
     def __str__(self):
         return f"{self.cells} = {self.count}"
 
-    def known_mines(self):
+    def known_mines(self) -> set[tuple]:
         """
         Returns the set of all cells in self.cells known to be mines.
         """
@@ -110,7 +110,7 @@ class Sentence:
         else:
             return set()
 
-    def known_safes(self):
+    def known_safes(self) -> set[tuple]:
         """
         Returns the set of all cells in self.cells known to be safe.
         """
@@ -127,8 +127,8 @@ class Sentence:
         if cell in self.cells:
             self.cells.remove(cell)
             self.count -= 1
-        else:
-            pass
+            if self.count < 0:
+                raise ValueError(f"Sentence {self}, cell: {cell}")
 
     def mark_safe(self, cell):
         """
@@ -137,8 +137,6 @@ class Sentence:
         """
         if cell in self.cells:
             self.cells.remove(cell)
-        else:
-            pass
 
 
 class MinesweeperAI:
@@ -159,8 +157,60 @@ class MinesweeperAI:
         self.mines = set()
         self.safes = set()
 
+        self.blanc_cells = self._populate_blancs()
+
         # List of sentences about the game known to be true
         self.knowledge = []
+
+    def _populate_blancs(self) -> set[tuple]:
+        cells = set()
+        for i in range(self.height):
+            for j in range(self.width):
+                cells.add((i, j))
+        return cells
+
+    def _remove_empty_sentence(self, sentence):
+        if len(sentence.cells) == 0:
+            self.knowledge.remove(sentence)
+
+    def _print_knowledge(self):
+        """
+        Prints the current knowledge base of the AI.
+        """
+        print(f"Moves made: {(self.moves_made)}")
+        print(f"Safe moves: {(self.safes)}")
+        print(f"Known mines: {self.mines}")
+        explored_or_mined = self.moves_made | self.mines
+        available_safes = self.safes - explored_or_mined
+        print(f"Available moves: {available_safes}")
+        print(f"Current knowledge base:")
+        for s in self.knowledge:
+            print(s)
+
+    def _add_sentence_to_knowledge(self, new_sentence: Sentence):
+        is_unique = True
+        for sentence in self.knowledge:
+            if sentence == new_sentence:
+                is_unique = False
+                break
+        if is_unique:
+            self.knowledge.append(new_sentence)
+
+    def list_nearby_cells(self, cell) -> set:
+        nearby_cells = set()
+
+        # Loop over all cells within one row and column
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+
+                # Ignore the cell itself
+                if (i, j) == cell:
+                    continue
+
+                # Update count if cell in bounds and is mine
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    nearby_cells.add((i, j))
+        return nearby_cells
 
     def mark_mine(self, cell):
         """
@@ -195,9 +245,83 @@ class MinesweeperAI:
             5) add any new sentences to the AI's knowledge base
                if they can be inferred from existing knowledge
         """
-        raise NotImplementedError
+        # 1) mark the cell as a move that has been made
+        self.moves_made.add(cell)
 
-    def make_safe_move(self):
+        # 2) mark the cell as a move
+        self.mark_safe(cell)
+
+        # 3) add a new sentence to the AI's knowledge base
+        # based on the value of `cell` and `count`
+        nearby_cells = self.list_nearby_cells(cell)
+
+        unknown_nearby_cells = []
+        nearby_count = count
+        for cell in nearby_cells:
+            if not (cell in self.safes):
+                unknown_nearby_cells.append(cell)
+            if cell in self.mines:
+                nearby_count = count - 1
+
+        if len(unknown_nearby_cells) > 0:
+            new_sentence = Sentence(cells=unknown_nearby_cells, count=nearby_count)
+            self._add_sentence_to_knowledge(new_sentence)
+            print(f"Added new sentence by click: {new_sentence}.")
+            orig_s = Sentence(cells=nearby_cells, count=count)
+            if len(new_sentence.cells) < len(orig_s.cells):
+                print(f"The original should've been {orig_s}")
+
+        # 4) mark any additional cells as safe or as mines
+        # if it can be concluded based on the AI's knowledge base
+        is_knowlendge_changed = True
+        while is_knowlendge_changed:
+            is_knowlendge_changed = False
+            # self._clean_knowledge()
+
+            self._print_knowledge()
+            for sentence in list(self.knowledge):
+                know_safes = sentence.known_safes()
+                for cell in set(know_safes):
+                    if cell not in self.safes:
+                        self.mark_safe(cell)
+                        is_knowlendge_changed = True
+                know_mines = sentence.known_mines()
+                for cell in set(know_mines):
+                    if cell not in self.mines:
+                        self.mark_mine(cell)
+                        is_knowlendge_changed = True
+                self._remove_empty_sentence(sentence)
+            # 5) draw conclusions from
+            # if sentence is 1 cell long, than we solved it
+            for sentence in list(self.knowledge):
+                if len(sentence.cells) == 1:
+                    only_cell = next(iter(sentence.cells))
+                    if sentence.count == 0:
+                        self.mark_safe(only_cell)
+                        is_knowlendge_changed = True
+                    if sentence.count == 1:
+                        self.mark_mine(only_cell)
+                        is_knowlendge_changed = True
+                self._remove_empty_sentence(sentence)
+
+            for s in list(self.knowledge):
+                for other_s in (self.knowledge):
+                    if s != other_s and len(other_s.cells) != 0 and len(s.cells) != 0:
+                        s_cells = s.cells
+                        s_count = s.count
+                        other_cells = other_s.cells
+                        other_count = other_s.count
+                        if other_cells.issubset(s_cells):
+                            print(f"Set: {s}")
+                            print(f"Subset: {other_s}")
+                            deducted_sentence = Sentence(
+                                s_cells - other_cells, s_count - other_count
+                            )
+                            print(f"Deducted sentence: {deducted_sentence}")
+                            self._add_sentence_to_knowledge(deducted_sentence)
+                            is_knowlendge_changed = True
+
+    def make_safe_move(self) -> tuple:
         """
         Returns a safe cell to choose on the Minesweeper board.
         The move must be known to be safe, and not already a move
@@ -206,7 +330,20 @@ class MinesweeperAI:
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        raise NotImplementedError
+        if len(self.safes) > 0:
+            # Calculate the union of moves_made and mines
+            explored_or_mined = self.moves_made | self.mines
+            # Find elements in safes that are not in explored_or_mined
+            available_safes = self.safes - explored_or_mined
+            # If there are any such elements, pick one (e.g., the first one)
+            if available_safes:
+                chosen_move = next(iter(available_safes))
+                print(f"I pick this safe cell: {chosen_move}")
+                return chosen_move
+            else:
+                return None
+        else:
+            return None
 
     def make_random_move(self):
         """
@@ -215,8 +352,11 @@ class MinesweeperAI:
             1) have not already been chosen, and
             2) are not known to be mines
         """
-        raise NotImplementedError
+        # Remove cells that have already been played, flagged as mines, or safe
+        unavailable = self.moves_made | self.mines | self.safes
+        # Remove all unavailable cells from blanc_cells
+        self.blanc_cells = self.blanc_cells.difference(unavailable)
 
-
-m = Minesweeper()
-a = 1
+        random_cell = random.choice(list(self.blanc_cells))
+        print(f"Picked a random cell {random_cell}")
+        return random_cell
