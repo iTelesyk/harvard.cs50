@@ -1,4 +1,5 @@
 from pagerank import *
+
 damping_factor = 0.85
 
 # corpus = {
@@ -8,13 +9,23 @@ damping_factor = 0.85
 # }
 # page = "1.html"
 
-corpus= {'1': {'2'}, '2': {'3', '1'}, '3': {'2', '4'}, '4': {'2'}}
-page = "4"
+# corpus= {'1': {'2'}, '2': {'3', '1'}, '3': {'2', '4'}, '4': {'2'}}
+# page = "4"
 
-result = transition_model(corpus, page, damping_factor)
-print(result)
+# result = transition_model(corpus, page, damping_factor)
+# print(result)
+
+# spr = sample_pagerank(corpus=corpus, damping_factor=damping_factor, n=SAMPLES)
+# print(spr)
 
 
+corpus = {
+    "1": {"2"},
+    "2": {"1", "3"},
+    "3": {"2", "4", "5"},
+    "4": {"1", "2"},
+    "5": set(),
+}
 
-spr = sample_pagerank(corpus=corpus, damping_factor=damping_factor, n=SAMPLES)
-print(spr)
+ipr = iterate_pagerank(corpus=corpus, damping_factor=damping_factor)
+print(ipr)

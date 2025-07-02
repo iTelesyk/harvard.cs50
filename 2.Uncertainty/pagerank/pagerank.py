@@ -121,7 +121,7 @@ def sample_pagerank(corpus: dict, damping_factor: float, n: int):
     return rank
 
 
-def iterate_pagerank(corpus, damping_factor):
+def iterate_pagerank(corpus: dict, damping_factor: float):
     """
     Return PageRank values for each page by iteratively updating
     PageRank values until convergence.
@@ -130,7 +130,33 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    rank = {}
+    total_pages = len(corpus)
+    starting_rank = 1 / total_pages
+    for page in corpus:
+        rank[page] = starting_rank
+
+    # condition that is defined by random jumps
+    random_cond = (1 - damping_factor) / total_pages
+
+    # TODO: replace with while True
+    for i in range(20000):
+        prev_rank = rank.copy()
+        # update rank for each page
+        for page in corpus:
+            sum = 0
+            # calculate the sum
+            for sub_page in corpus:
+                page_links = corpus[sub_page]
+                num_links = len(page_links)
+                if page in page_links:
+                    sum += rank[sub_page] / num_links
+                elif num_links == 0:
+                    sum += rank[sub_page] / total_pages
+            linked_cond = damping_factor * sum
+            rank[page] = random_cond + linked_cond
+
+    return rank
 
 
 if __name__ == "__main__":
