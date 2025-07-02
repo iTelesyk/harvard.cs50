@@ -137,11 +137,14 @@ def iterate_pagerank(corpus: dict, damping_factor: float):
         rank[page] = starting_rank
 
     # condition that is defined by random jumps
+    # is a constant for given number of pages
     random_cond = (1 - damping_factor) / total_pages
 
-    # TODO: replace with while True
-    for i in range(20000):
+    i = 0
+    while True:
+        # copy of ranks to calculate difference below
         prev_rank = rank.copy()
+
         # update rank for each page
         for page in corpus:
             sum = 0
@@ -150,12 +153,26 @@ def iterate_pagerank(corpus: dict, damping_factor: float):
                 page_links = corpus[sub_page]
                 num_links = len(page_links)
                 if page in page_links:
+                    # the usual formula: page rank/num of links on this page
                     sum += rank[sub_page] / num_links
                 elif num_links == 0:
+                    # a special case when page has no links on it
                     sum += rank[sub_page] / total_pages
-            linked_cond = damping_factor * sum
-            rank[page] = random_cond + linked_cond
+            # condition influenced by the link on each page
+            links_cond = damping_factor * sum
+            # new rank: random condition plus links condition
+            rank[page] = random_cond + links_cond
 
+        # calculate the difference in rank for each page
+        max_diff = float("-inf")
+        for page in rank:
+            diff = abs(rank[page] - prev_rank[page])
+            if diff > max_diff:
+                max_diff = diff
+        if max_diff < 0.001:
+            print(f"Solved ranking after {i} interations")
+            break
+        i += 1
     return rank
 
 
