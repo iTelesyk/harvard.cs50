@@ -3,37 +3,18 @@ import itertools
 import sys
 
 PROBS = {
-
     # Unconditional probabilities for having gene
-    "gene": {
-        2: 0.01,
-        1: 0.03,
-        0: 0.96
-    },
-
+    "gene": {2: 0.01, 1: 0.03, 0: 0.96},
     "trait": {
-
         # Probability of trait given two copies of gene
-        2: {
-            True: 0.65,
-            False: 0.35
-        },
-
+        2: {True: 0.65, False: 0.35},
         # Probability of trait given one copy of gene
-        1: {
-            True: 0.56,
-            False: 0.44
-        },
-
+        1: {True: 0.56, False: 0.44},
         # Probability of trait given no gene
-        0: {
-            True: 0.01,
-            False: 0.99
-        }
+        0: {True: 0.01, False: 0.99},
     },
-
     # Mutation probability
-    "mutation": 0.01
+    "mutation": 0.01,
 }
 
 
@@ -46,17 +27,7 @@ def main():
 
     # Keep track of gene and trait probabilities for each person
     probabilities = {
-        person: {
-            "gene": {
-                2: 0,
-                1: 0,
-                0: 0
-            },
-            "trait": {
-                True: 0,
-                False: 0
-            }
-        }
+        person: {"gene": {2: 0, 1: 0, 0: 0}, "trait": {True: 0, False: 0}}
         for person in people
     }
 
@@ -66,8 +37,10 @@ def main():
 
         # Check if current set of people violates known information
         fails_evidence = any(
-            (people[person]["trait"] is not None and
-             people[person]["trait"] != (person in have_trait))
+            (
+                people[person]["trait"] is not None
+                and people[person]["trait"] != (person in have_trait)
+            )
             for person in names
         )
         if fails_evidence:
@@ -76,13 +49,13 @@ def main():
         # Loop over all sets of people who might have the gene
         for one_gene in powerset(names):
             for two_genes in powerset(names - one_gene):
-
                 # Update probabilities with new joint probability
+                # p = joint_probability(people, {"Harry"}, {"James"}, {"James"})
                 p = joint_probability(people, one_gene, two_genes, have_trait)
-                update(probabilities, one_gene, two_genes, have_trait, p)
+                # update(probabilities, one_gene, two_genes, have_trait, p)
 
     # Ensure probabilities sum to 1
-    normalize(probabilities)
+    # normalize(probabilities)
 
     # Print results
     for person in people:
@@ -110,8 +83,11 @@ def load_data(filename):
                 "name": name,
                 "mother": row["mother"] or None,
                 "father": row["father"] or None,
-                "trait": (True if row["trait"] == "1" else
-                          False if row["trait"] == "0" else None)
+                "trait": (
+                    True
+                    if row["trait"] == "1"
+                    else False if row["trait"] == "0" else None
+                ),
             }
     return data
 
@@ -122,13 +98,14 @@ def powerset(s):
     """
     s = list(s)
     return [
-        set(s) for s in itertools.chain.from_iterable(
+        set(s)
+        for s in itertools.chain.from_iterable(
             itertools.combinations(s, r) for r in range(len(s) + 1)
         )
     ]
 
 
-def joint_probability(people, one_gene, two_genes, have_trait):
+def joint_probability(people: dict, one_gene, two_genes, have_trait):
     """
     Compute and return a joint probability.
 
@@ -139,7 +116,76 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
-    raise NotImplementedError
+    global PROBS
+    joint_prob = 1
+    # TODO: check that data works as intended
+    # compare data to Joel Kammet output
+    data = dict()
+    for person in people:
+        gene = 0
+        if person in one_gene:
+            gene = 1
+        if person in two_genes:
+            gene = 2
+        trait = False
+        if person in have_trait:
+            trait = True
+        data[person] = {"gene": gene, "trait": trait}
+
+    # get subset of
+    for person in people:
+        gene = data[person]["gene"]
+        trait = data[person]["trait"]
+
+        # if parents are unknown
+        if people[person]["mother"] is None:
+            # Unconditional probability for having this gene
+            p_g = PROBS["gene"][gene]
+            # Conditional probability of having this trait and this gene
+            p_t_and_g = PROBS["trait"][gene][trait]
+            person_prop = p_g * p_t_and_g
+        # if parents are known
+        else:
+            mother = people[person]["mother"]
+            father = people[person]["father"]
+            mother_gene_num = data[mother]["gene"]
+            father_gene_num = data[father]["gene"]
+            p_mother = get_parent_probability(gene, mother_gene_num)
+            p_not_mother = 1 - p_mother
+            p_father = get_parent_probability(gene, father_gene_num)
+            p_not_father = 1 - p_father
+            p_g = p_mother * p_not_father + p_father * p_not_mother
+
+        # Conditional probability of having this trait and this gene
+        p_t_and_g = PROBS["trait"][gene][trait]
+        person_prop = p_g * p_t_and_g
+
+        joint_prob *= person_prop
+    print(f"{data} : {joint_prob:.8f}")
+    return joint_prob
+
+# TODO: calculate the conditional probability better
+#Hints
+# ... But remember that for any child, the probability of them having a certain number of genes is conditional on what genes their parents have.
+
+def get_parent_probability(child_gene, parent_gene):
+    if child_gene == 0:
+        match parent_gene:
+            case 0:
+                p_parent = 1 - PROBS["mutation"]        
+            case 1:
+                p_parent = 0.5
+            case 2:
+                p_parent = PROBS["mutation"]
+    else:
+        match parent_gene:
+            case 0:
+                p_parent = PROBS["mutation"]
+            case 1:
+                p_parent = 0.5
+            case 2:
+                p_parent = 1 - PROBS["mutation"]
+    return p_parent
 
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
