@@ -150,11 +150,18 @@ def joint_probability(people: dict, one_gene, two_genes, have_trait):
             father = people[person]["father"]
             mother_gene_num = data[mother]["gene"]
             father_gene_num = data[father]["gene"]
-            p_mother = get_parent_probability(gene, mother_gene_num)
-            p_not_mother = 1 - p_mother
-            p_father = get_parent_probability(gene, father_gene_num)
-            p_not_father = 1 - p_father
-            p_g = p_mother * p_not_father + p_father * p_not_mother
+            p_gene_from_mother = get_parent_probability(mother_gene_num)
+            # p_not_mother = 1 - p_mother
+            p_gene_from_father = get_parent_probability(father_gene_num)
+            # p_not_father = 1 - p_father
+            # p_g = p_mother * p_not_father + p_father * p_not_mother
+            match gene:
+                case 0:
+                    p_g = (1-p_gene_from_mother)*(1-p_gene_from_father)
+                case 1:
+                    p_g = p_gene_from_mother*(1-p_gene_from_father)+(1-p_gene_from_mother)*p_gene_from_father
+                case 2:
+                    p_g = p_gene_from_mother*p_gene_from_father
 
         # Conditional probability of having this trait and this gene
         p_t_and_g = PROBS["trait"][gene][trait]
@@ -164,27 +171,15 @@ def joint_probability(people: dict, one_gene, two_genes, have_trait):
     print(f"{data} : {joint_prob:.8f}")
     return joint_prob
 
-# TODO: calculate the conditional probability better
-#Hints
-# ... But remember that for any child, the probability of them having a certain number of genes is conditional on what genes their parents have.
 
-def get_parent_probability(child_gene, parent_gene):
-    if child_gene == 0:
-        match parent_gene:
-            case 0:
-                p_parent = 1 - PROBS["mutation"]        
-            case 1:
-                p_parent = 0.5
-            case 2:
-                p_parent = PROBS["mutation"]
-    else:
-        match parent_gene:
-            case 0:
-                p_parent = PROBS["mutation"]
-            case 1:
-                p_parent = 0.5
-            case 2:
-                p_parent = 1 - PROBS["mutation"]
+def get_parent_probability(parent_gene):
+    match parent_gene:
+        case 0:
+            p_parent = PROBS["mutation"]
+        case 1:
+            p_parent = 0.5
+        case 2:
+            p_parent = 1 - PROBS["mutation"]
     return p_parent
 
 
