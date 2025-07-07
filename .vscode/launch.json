@@ -5,7 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug heredity.py with family0.csv",
+            "name": "1.Knowledge knights/puzzle.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/1.Knowledge/knights/puzzle.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "1.Knowledge minesweeper/runner.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/1.Knowledge/minesweeper/runner.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/1.Knowledge/minesweeper"
+        },
+        {
+            "name": "2.Uncertainty pagerank.py with corpus0",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/2.Uncertainty/pagerank/pagerank.py",
+            "console": "integratedTerminal",
+            "args": [
+                "${workspaceFolder}/2.Uncertainty/pagerank/corpus0"
+            ]
+        },
+        {
+            "name": "2.Uncertainty heredity.py with family0.csv",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/2.Uncertainty/heredity/heredity.py",
@@ -13,6 +38,6 @@
             "args": [
                 "${workspaceFolder}/2.Uncertainty/heredity/data/family0.csv"
             ]
-        }
+        },
     ]
 }
