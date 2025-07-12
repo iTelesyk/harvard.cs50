@@ -39,5 +39,17 @@
                 "${workspaceFolder}/2.Uncertainty/heredity/data/family0.csv"
             ]
         },
+        {
+            "name": "3.Optimization crossword/generate.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/3.Optimization/crossword/generate.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/3.Optimization/crossword",
+            "args": [
+                "data/structure0.txt",
+                "data/words0.txt"
+            ]
+        },
     ]
 }
