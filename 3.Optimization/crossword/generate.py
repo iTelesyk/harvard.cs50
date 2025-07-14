@@ -5,7 +5,7 @@ from crossword import *
 
 class CrosswordCreator():
 
-    def __init__(self, crossword):
+    def __init__(self, crossword: Crossword):
         """
         Create new CSP crossword generate.
         """
@@ -105,7 +105,7 @@ class CrosswordCreator():
                 if len(word) != var.length:
                     var_domain.remove(word)
 
-    def revise(self, x, y):
+    def revise(self, x: Variable, y: Variable):
         """
         Make variable `x` arc consistent with variable `y`.
         To do so, remove values from `self.domains[x]` for which there is no
@@ -114,7 +114,36 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        raise NotImplementedError
+        revised = False
+        if x.direction == y.direction:
+            return revised
+
+        overlaps = self.crossword.overlaps
+        xy_do_overlap = False
+        # check do x and y even overlap
+        for case in overlaps:
+            if x in case and y in case:
+                # if they overlap, record the overlapping position
+                xy_do_overlap = True
+                overlap_pos = overlaps[case]
+                break
+        if not xy_do_overlap:
+            return revised
+        
+        x_domain = self.domains[x]
+        y_domain = self.domains[y]
+        for x_word in set(x_domain):
+            x_satisfies_at_least_one_y = False
+            x_char = x_word[overlap_pos[0]]
+            for y_word in y_domain:
+                y_char = y_word[overlap_pos[1]]
+                if x_char == y_char:
+                    x_satisfies_at_least_one_y = True
+                    break # break from y words loop
+            if not x_satisfies_at_least_one_y:
+                x_domain.remove(x_word)
+                revised = True
+        return revised
 
     def ac3(self, arcs=None):
         """
@@ -132,14 +161,16 @@ class CrosswordCreator():
         Return True if `assignment` is complete (i.e., assigns a value to each
         crossword variable); return False otherwise.
         """
-        raise NotImplementedError
+        # raise NotImplementedError
+        return None
 
     def consistent(self, assignment):
         """
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
-        raise NotImplementedError
+        # raise NotImplementedError
+        return None
 
     def order_domain_values(self, var, assignment):
         """
@@ -148,7 +179,8 @@ class CrosswordCreator():
         The first value in the list, for example, should be the one
         that rules out the fewest values among the neighbors of `var`.
         """
-        raise NotImplementedError
+        # raise NotImplementedError
+        return None
 
     def select_unassigned_variable(self, assignment):
         """
@@ -158,7 +190,8 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        raise NotImplementedError
+        # raise NotImplementedError
+        return None
 
     def backtrack(self, assignment):
         """
@@ -169,7 +202,8 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
-        raise NotImplementedError
+        # raise NotImplementedError
+        return None
 
 
 def main():
