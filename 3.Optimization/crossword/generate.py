@@ -3,7 +3,7 @@ import sys
 from crossword import *
 
 
-class CrosswordCreator():
+class CrosswordCreator:
 
     def __init__(self, crossword: Crossword):
         """
@@ -11,8 +11,7 @@ class CrosswordCreator():
         """
         self.crossword = crossword
         self.domains = {
-            var: self.crossword.words.copy()
-            for var in self.crossword.variables
+            var: self.crossword.words.copy() for var in self.crossword.variables
         }
 
     def letter_grid(self, assignment):
@@ -178,25 +177,55 @@ class CrosswordCreator():
 
         return True
 
-    def assignment_complete(self, assignment):
-    # def assignment_complete(self, assignment: dict[Variable, str]):
+    def assignment_complete(self, assignment: dict[Variable, str]):
         """
         Return True if `assignment` is complete (i.e., assigns a value to each
         crossword variable); return False otherwise.
         """
-        # for var in assignment:
-        #     value = assignment[var]
-        #     if value is None or value != "":
-        #         return False
-        # return True
+        # checks all variables in self.crossword.variables and makes sure that 
+        # all of them have similar var in assignment and that word in not empty
+        for var in self.crossword.variables:
+            try:
+                assigned_word = assignment[var]
+                if assigned_word == "":
+                    return False
+            except KeyError:
+                return False
+        return True
 
-    def consistent(self, assignment):
+    def consistent(self, assignment: dict[Variable, str]):
         """
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
-        # raise NotImplementedError
-        return None
+        # checks for unary constrains
+        for var, word in assignment.items():
+            if var.length != len(word):
+                return False
+
+        # checks that all assigned words are unique
+        words = list(assignment.values())
+        unique_words = set(words)
+        if len(words) != len(unique_words):
+            return False
+
+        # checks for binary constrains
+        # for every word in assignment, compare it with other words in assignment
+        # if they overlap, check that overlapping character is the same
+        for x, x_word in assignment.items():
+            for y, y_word in assignment.items():
+                if x != y:
+                    try:
+                        overlap_pos = self.crossword.overlaps[(x, y)]
+                    except KeyError:
+                        return False
+                    if overlap_pos is not None:
+                        x_char = x_word[overlap_pos[0]]
+                        y_char = y_word[overlap_pos[1]]
+                        if x_char != y_char:
+                            return False
+
+        return True
 
     def order_domain_values(self, var, assignment):
         """
@@ -228,7 +257,13 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
-        
+        if self.assignment_complete(assignment):
+            return assignment
+        testing_ass = {
+            Variable(0, 1, "down", 5): "SEVEN",
+            Variable(4, 1, "across", 4): "NINE",
+        }
+        self.consistent(testing_ass)
         return None
 
 
