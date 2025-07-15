@@ -49,6 +49,7 @@ class CrosswordCreator():
         Save crossword assignment to an image file.
         """
         from PIL import Image, ImageDraw, ImageFont
+
         cell_size = 100
         cell_border = 2
         interior_size = cell_size - 2 * cell_border
@@ -57,9 +58,8 @@ class CrosswordCreator():
         # Create a blank canvas
         img = Image.new(
             "RGBA",
-            (self.crossword.width * cell_size,
-             self.crossword.height * cell_size),
-            "black"
+            (self.crossword.width * cell_size, self.crossword.height * cell_size),
+            "black",
         )
         font = ImageFont.truetype("assets/fonts/OpenSans-Regular.ttf", 80)
         draw = ImageDraw.Draw(img)
@@ -68,19 +68,24 @@ class CrosswordCreator():
             for j in range(self.crossword.width):
 
                 rect = [
-                    (j * cell_size + cell_border,
-                     i * cell_size + cell_border),
-                    ((j + 1) * cell_size - cell_border,
-                     (i + 1) * cell_size - cell_border)
+                    (j * cell_size + cell_border, i * cell_size + cell_border),
+                    (
+                        (j + 1) * cell_size - cell_border,
+                        (i + 1) * cell_size - cell_border,
+                    ),
                 ]
                 if self.crossword.structure[i][j]:
                     draw.rectangle(rect, fill="white")
                     if letters[i][j]:
                         _, _, w, h = draw.textbbox((0, 0), letters[i][j], font=font)
                         draw.text(
-                            (rect[0][0] + ((interior_size - w) / 2),
-                             rect[0][1] + ((interior_size - h) / 2) - 10),
-                            letters[i][j], fill="black", font=font
+                            (
+                                rect[0][0] + ((interior_size - w) / 2),
+                                rect[0][1] + ((interior_size - h) / 2) - 10,
+                            ),
+                            letters[i][j],
+                            fill="black",
+                            font=font,
                         )
 
         img.save(filename)
@@ -115,21 +120,15 @@ class CrosswordCreator():
         False if no revision was made.
         """
         revised = False
-        if x.direction == y.direction:
+
+        # check do x and y even overlap
+        overlaps = self.crossword.overlaps
+        overlap_pos = overlaps[(x, y)]
+
+        # return false if no overlap
+        if overlap_pos is None:
             return revised
 
-        overlaps = self.crossword.overlaps
-        xy_do_overlap = False
-        # check do x and y even overlap
-        for case in overlaps:
-            if x in case and y in case:
-                # if they overlap, record the overlapping position
-                xy_do_overlap = True
-                overlap_pos = overlaps[case]
-                break
-        if not xy_do_overlap:
-            return revised
-        
         x_domain = self.domains[x]
         y_domain = self.domains[y]
         for x_word in set(x_domain):
@@ -139,13 +138,13 @@ class CrosswordCreator():
                 y_char = y_word[overlap_pos[1]]
                 if x_char == y_char:
                     x_satisfies_at_least_one_y = True
-                    break # break from y words loop
+                    break  # break from y words loop
             if not x_satisfies_at_least_one_y:
                 x_domain.remove(x_word)
                 revised = True
         return revised
 
-    def ac3(self, arcs=None):
+    def ac3(self, arcs=None) -> bool:
         """
         Update `self.domains` such that each variable is arc consistent.
         If `arcs` is None, begin with initial list of all arcs in the problem.
@@ -154,15 +153,42 @@ class CrosswordCreator():
         Return True if arc consistency is enforced and no domains are empty;
         return False if one or more domains end up empty.
         """
-        raise NotImplementedError
+        if arcs is None:
+            arcs = list()
+            for x in self.crossword.variables:
+                for y in self.crossword.neighbors(x):
+                    arcs.append((x, y))
+
+        queue = arcs.copy()
+        while len(queue) > 0:
+            arc = queue.pop()
+            x, y = arc
+            if self.revise(x, y):
+                if self.domains[x] == 0:
+                    return False
+                else:
+                    x_neighnors = self.crossword.neighbors(x).copy()
+                    x_neighnors.remove(y)
+                    for z in x_neighnors:
+                        queue.append((z, x))
+
+        for var in self.domains:
+            if len(self.domains[var]) == 0:
+                return False
+
+        return True
 
     def assignment_complete(self, assignment):
+    # def assignment_complete(self, assignment: dict[Variable, str]):
         """
         Return True if `assignment` is complete (i.e., assigns a value to each
         crossword variable); return False otherwise.
         """
-        # raise NotImplementedError
-        return None
+        # for var in assignment:
+        #     value = assignment[var]
+        #     if value is None or value != "":
+        #         return False
+        # return True
 
     def consistent(self, assignment):
         """
@@ -202,7 +228,7 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
-        # raise NotImplementedError
+        
         return None
 
 
