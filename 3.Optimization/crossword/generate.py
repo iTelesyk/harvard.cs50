@@ -182,7 +182,7 @@ class CrosswordCreator:
         Return True if `assignment` is complete (i.e., assigns a value to each
         crossword variable); return False otherwise.
         """
-        # checks all variables in self.crossword.variables and makes sure that 
+        # checks all variables in self.crossword.variables and makes sure that
         # all of them have similar var in assignment and that word in not empty
         for var in self.crossword.variables:
             try:
@@ -227,17 +227,19 @@ class CrosswordCreator:
 
         return True
 
-    def order_domain_values(self, var, assignment):
+    def order_domain_values(self, var: Variable, assignment: dict[Variable, str]):
         """
         Return a list of values in the domain of `var`, in order by
         the number of values they rule out for neighboring variables.
         The first value in the list, for example, should be the one
         that rules out the fewest values among the neighbors of `var`.
         """
-        # raise NotImplementedError
-        return None
+        # TODO update the algorith, so it order the result
+        # for now it returns unordered values
+        possible_values = self.domains[var]
+        return list(possible_values)
 
-    def select_unassigned_variable(self, assignment):
+    def select_unassigned_variable(self, assignment: dict[Variable, str]):
         """
         Return an unassigned variable not already part of `assignment`.
         Choose the variable with the minimum number of remaining values
@@ -245,10 +247,23 @@ class CrosswordCreator:
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        # raise NotImplementedError
-        return None
+        # all variables in crossword
+        all_vars = self.crossword.variables 
+        assigned_vars = set(assignment.keys()) 
+        # set of all unassigned variables
+        unassigned_vars = all_vars - assigned_vars
 
-    def backtrack(self, assignment):
+        # simple function that return the size of domain varibales for given variable
+        # would be needed below
+        def domain_size(var):
+            return len(self.domains[var])
+        
+        # create a list out of set of unassigned variables
+        # sort it by the size of its domain
+        unassigned_vars_list = sorted(unassigned_vars, key=domain_size)
+        return unassigned_vars_list[0]
+
+    def backtrack(self, assignment: dict[Variable, str]):
         """
         Using Backtracking Search, take as input a partial assignment for the
         crossword and return a complete assignment if possible to do so.
@@ -259,11 +274,20 @@ class CrosswordCreator:
         """
         if self.assignment_complete(assignment):
             return assignment
-        testing_ass = {
-            Variable(0, 1, "down", 5): "SEVEN",
-            Variable(4, 1, "across", 4): "NINE",
-        }
-        self.consistent(testing_ass)
+
+        # select any unassigned variable
+        var = self.select_unassigned_variable(assignment)
+        var_possible_values = self.order_domain_values(var=var, assignment=assignment)
+        for value in var_possible_values:
+            new_assignment = assignment.copy()
+            new_assignment[var] = value
+            if self.consistent(assignment=new_assignment):
+                assignment = new_assignment
+                result = self.backtrack(assignment)
+                if self.consistent(result):
+                    return result
+            else:
+                self.domains[var].remove(value)
         return None
 
 
