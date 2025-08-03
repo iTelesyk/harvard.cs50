@@ -1,5 +1,9 @@
 import csv
+import io
 import sys
+import pandas as pd
+import numpy as np
+
 
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
@@ -31,7 +35,7 @@ def main():
     print(f"True Negative Rate: {100 * specificity:.2f}%")
 
 
-def load_data(filename):
+def load_data(filename: str) -> tuple[list, list]:
     """
     Load shopping data from a CSV file `filename` and convert into a list of
     evidence lists and a list of labels. Return a tuple (evidence, labels).
@@ -59,18 +63,70 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
+    month_mapping = {
+        "Jan": 0,
+        "Feb": 1,
+        "Mar": 2,
+        "Apr": 3,
+        "May": 4,
+        "June": 5,
+        "Jul": 6,
+        "Aug": 7,
+        "Sep": 8,
+        "Oct": 9,
+        "Nov": 10,
+        "Dec": 11,
+    }
+    df = pd.read_csv(filename)
+    # Map month names to indices
+    df["Month"] = df["Month"].map(month_mapping)
+    # Map VisitorType to 0/1
+    df["VisitorType"] = df["VisitorType"].apply(
+        lambda x: 1 if x == "Returning_Visitor" else 0
+    )
+    # Map Weekend and Revenue to 0/1
+    df["Weekend"] = df["Weekend"].apply(lambda x: 1 if x == "TRUE" else 0)
+    df["Revenue"] = df["Revenue"].apply(lambda x: 1 if x == "TRUE" else 0)
+
+    evidence = df[
+        [
+            "Administrative",
+            "Administrative_Duration",
+            "Informational",
+            "Informational_Duration",
+            "ProductRelated",
+            "ProductRelated_Duration",
+            "BounceRates",
+            "ExitRates",
+            "PageValues",
+            "SpecialDay",
+            "Month",
+            "OperatingSystems",
+            "Browser",
+            "Region",
+            "TrafficType",
+            "VisitorType",
+            "Weekend",
+        ]
+    ].values.tolist()
+    labels = df["Revenue"].tolist()
+    return evidence, labels
 
 
-def train_model(evidence, labels):
+def train_model(evidence: list[list], labels: list[list]) -> KNeighborsClassifier:
     """
     Given a list of evidence lists and a list of labels, return a
     fitted k-nearest neighbor model (k=1) trained on the data.
     """
-    raise NotImplementedError
+    # create a instance of 1 neighbor model
+    model = KNeighborsClassifier(n_neighbors=1)
+    # training the model
+    model.fit(X=evidence, y=labels)
+
+    return model
 
 
-def evaluate(labels, predictions):
+def evaluate(labels: list[int], predictions: np.ndarray) -> tuple[float]:
     """
     Given a list of actual labels and a list of predicted labels,
     return a tuple (sensitivity, specificity).
@@ -85,7 +141,25 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+    true_positives = 0
+    total_positives = 0
+    true_negatives = 0
+    total_negatives = 0
+
+    for actual, predicted in zip(labels, predictions):
+        if actual == 1:
+            total_positives += 1
+            if predicted == 1:
+                true_positives += 1
+        else:
+            total_negatives += 1
+            if predicted == 0:
+                true_negatives += 1
+
+    sensitivity = true_positives / total_positives if total_positives else 0
+    specificity = true_negatives / total_negatives if total_negatives else 0
+
+    return sensitivity, specificity
 
 
 if __name__ == "__main__":

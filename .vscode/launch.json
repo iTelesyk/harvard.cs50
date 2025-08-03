@@ -51,5 +51,16 @@
                 "data/words0.txt"
             ]
         },
+        {
+            "name": "4.Learning shopping/shopping.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/4.Learning/shopping/shopping.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/4.Learning/shopping",
+            "args": [
+                "shopping.csv"
+            ]
+        },
     ]
 }
