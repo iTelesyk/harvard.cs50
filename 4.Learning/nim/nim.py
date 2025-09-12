@@ -1,6 +1,7 @@
 import math
 import random
 import time
+from typing import List, Tuple, Dict
 
 
 class Nim():
@@ -72,7 +73,7 @@ class Nim():
 
 class NimAI():
 
-    def __init__(self, alpha=0.5, epsilon=0.1):
+    def __init__(self, alpha=0.5, epsilon=0.1) -> None:
         """
         Initialize AI with an empty Q-learning dictionary,
         an alpha (learning) rate, and an epsilon rate.
@@ -86,7 +87,8 @@ class NimAI():
         self.alpha = alpha
         self.epsilon = epsilon
 
-    def update(self, old_state, action, new_state, reward):
+    def update(self, old_state: List[int], action: Tuple[int, int],
+               new_state: List[int], reward: int) -> None:
         """
         Update Q-learning model, given an old state, an action taken
         in that state, a new resulting state, and the reward received
@@ -96,14 +98,19 @@ class NimAI():
         best_future = self.best_future_reward(new_state)
         self.update_q_value(old_state, action, old, reward, best_future)
 
-    def get_q_value(self, state, action):
+    def get_q_value(self, state: List[int], action: Tuple[int, int]) -> float:
         """
         Return the Q-value for the state `state` and the action `action`.
         If no Q-value exists yet in `self.q`, return 0.
         """
-        raise NotImplementedError
+        try:
+            return self.q[tuple(state), action]
+        except KeyError:
+            return 0
 
-    def update_q_value(self, state, action, old_q, reward, future_rewards):
+    def update_q_value(self, state: List[int], action: Tuple[int, int],
+                       old_q: float, reward: int,
+                       future_rewards: float) -> None:
         """
         Update the Q-value for the state `state` and the action `action`
         given the previous Q-value `old_q`, a current reward `reward`,
@@ -118,9 +125,11 @@ class NimAI():
         `alpha` is the learning rate, and `new value estimate`
         is the sum of the current reward and estimated future rewards.
         """
-        raise NotImplementedError
+        new_value_estimate = reward + future_rewards
+        new_q = old_q + self.alpha * (new_value_estimate - old_q)
+        self.q[tuple(state), action] = new_q
 
-    def best_future_reward(self, state):
+    def best_future_reward(self, state: List[int]) -> float:
         """
         Given a state `state`, consider all possible `(state, action)`
         pairs available in that state and return the maximum of all
@@ -132,7 +141,8 @@ class NimAI():
         """
         raise NotImplementedError
 
-    def choose_action(self, state, epsilon=True):
+    def choose_action(self, state: List[int],
+                      epsilon: bool = True) -> Tuple[int, int]:
         """
         Given a state `state`, return an action `(i, j)` to take.
 
