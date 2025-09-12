@@ -62,5 +62,13 @@
                 "shopping.csv"
             ]
         },
+        {
+            "name": "4.Learning nim/play.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/4.Learning/nim/play.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/4.Learning/nim"
+        },        
     ]
 }
