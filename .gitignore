@@ -129,3 +129,6 @@ venv.bak/
 
 # Cython debug symbols
 cython_debug/
+
+# Neural Network assignment image
+*.ppm
