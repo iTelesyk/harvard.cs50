@@ -69,6 +69,25 @@
             "program": "${workspaceFolder}/4.Learning/nim/play.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/4.Learning/nim"
-        },        
+        },
+        {
+            "name": "6.Language parser/parser.py with sentence 1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/6.Language/parser/parser.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/6.Language/parser",
+            "args": [
+                "sentences/1.txt"
+            ]
+        },
+        {
+            "name": "6.Language parser/parser.py interactive",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/6.Language/parser/parser.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/6.Language/parser"
+        }
     ]
 }
