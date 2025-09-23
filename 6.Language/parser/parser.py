@@ -18,8 +18,22 @@ V -> "smiled" | "tell" | "were"
 NONTERMINALS = """
 S -> NP VP
 
-NP -> N | Det N
-VP -> V | V NP
+NP -> N 
+NP -> Det N
+NP -> PP NP
+NP -> AP NP
+NP -> N PP
+
+
+VP -> V 
+VP -> V NP
+VP -> NP VP
+VP -> V NP PP
+
+AP -> Adj | Adj AP
+
+PP -> P
+PP -> P NP
 
 """
 # AP -> A | A AP
@@ -33,19 +47,18 @@ parser = nltk.ChartParser(grammar)
 
 
 def main():
-
     # If filename specified, read sentence from file
     if len(sys.argv) == 2:
         with open(sys.argv[1]) as f:
             s = f.read()
-
+    
     # Otherwise, get sentence as input
     else:
         s = input("Sentence: ")
-
+    
     # Convert input into list of words
     s = preprocess(s)
-
+    
     # Attempt to parse sentence
     try:
         trees = list(parser.parse(s))
@@ -55,11 +68,11 @@ def main():
     if not trees:
         print("Could not parse sentence.")
         return
-
+    
     # Print each tree with noun phrase chunks
     for tree in trees:
         tree.pretty_print()
-
+    
         print("Noun Phrase Chunks")
         for np in np_chunk(tree):
             print(" ".join(np.flatten()))
