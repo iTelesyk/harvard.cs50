@@ -77,24 +77,50 @@ def main():
             print(" ".join(np.flatten()))
 
 
-def preprocess(sentence):
+def preprocess(sentence: str) -> list[str]:
     """
     Convert `sentence` to a list of its words.
     Pre-process sentence by converting all characters to lowercase
     and removing any word that does not contain at least one alphabetic
     character.
     """
-    raise NotImplementedError
+    # Convert sentence to lowercase
+    sentence = sentence.lower()
+    
+    # Tokenize the sentence into words
+    words = nltk.word_tokenize(sentence)
+    
+    # Filter words to keep only those containing alphabetic characters
+    filtered_words = []
+    for word in words:
+        if any(char.isalpha() for char in word):
+            filtered_words.append(word)
+    
+    return filtered_words
 
 
-def np_chunk(tree):
+def np_chunk(tree: nltk.Tree) -> list:
     """
     Return a list of all noun phrase chunks in the sentence tree.
     A noun phrase chunk is defined as any subtree of the sentence
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    raise NotImplementedError
+    np_chunks = []
+    for subtree in tree.subtrees():
+        if subtree.label() == 'NP':
+            # Check if this NP contains any other NPs as subtrees
+            has_nested_np = False
+            for nested in subtree.subtrees():
+                if nested != subtree and nested.label() == 'NP':
+                    has_nested_np = True
+                    break
+            
+            # If this NP doesn't contain other NPs, it's a chunk
+            if not has_nested_np:
+                np_chunks.append(subtree)
+    
+    return np_chunks
 
 
 if __name__ == "__main__":
