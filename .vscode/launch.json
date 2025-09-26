@@ -88,6 +88,14 @@
             "program": "${workspaceFolder}/6.Language/parser/parser.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/6.Language/parser"
+        },
+        {
+            "name": "6.Language attention/mask.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/6.Language/attention/mask.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/6.Language/attention"
         }
     ]
 }
