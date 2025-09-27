@@ -23,7 +23,7 @@ PIXELS_PER_WORD = 200
 
 def main():
     # TODO: Remove this hardcoded text later
-    text = "I was told to shove is right into my [MASK]."
+    text = "I was told to shove it right into my [MASK]."
     print(f"Text: {text}")
     # text = input("Text: ")
 
@@ -74,7 +74,7 @@ def get_color_for_attention_score(attention_score: tf.Tensor) -> tuple[int]:
     return (rgb, rgb, rgb)
 
 
-def visualize_attentions(tokens, attentions):
+def visualize_attentions(tokens: list[str], attentions: tf.Tensor):
     """
     Produce a graphical representation of self-attention scores.
 
@@ -84,8 +84,12 @@ def visualize_attentions(tokens, attentions):
     include both the layer number (starting count from 1) and head number
     (starting count from 1).
     """
-    # TODO: Update this function to produce diagrams for all layers and heads.
-    generate_diagram(1, 1, tokens, attentions[0][0][0])
+    # generate_diagram(1, 1, tokens, attentions[0][0][0])
+    for i, layer_attention in enumerate(attentions):
+        # Tensor shape: (batch_size, num_heads, seq_length, seq_length)
+        num_heads = layer_attention.shape[1]
+        for j in range(num_heads):
+            generate_diagram(i + 1, j + 1, tokens, layer_attention[0][j])    
 
 
 def generate_diagram(layer_number, head_number, tokens, attention_weights):
