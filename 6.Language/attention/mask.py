@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from PIL import Image, ImageDraw, ImageFont
 from transformers import AutoTokenizer, TFBertForMaskedLM
+from pathlib import Path  # new import
 
 # Pre-trained masked language model
 MODEL = "bert-base-uncased"
@@ -11,14 +12,18 @@ MODEL = "bert-base-uncased"
 K = 3
 
 # Constants for generating attention diagrams
-FONT = ImageFont.truetype("assets/fonts/OpenSans-Regular.ttf", 28)
+SCRIPT_DIR = Path(__file__).parent
+FONT_PATH = SCRIPT_DIR / "assets" / "fonts" / "OpenSans-Regular.ttf"
+if not FONT_PATH.exists():
+    sys.exit(f"Font file not found at {FONT_PATH}")
+FONT = ImageFont.truetype(str(FONT_PATH), 28)
 GRID_SIZE = 40
 PIXELS_PER_WORD = 200
 
 
 def main():
     # TODO: Remove this hardcoded text later
-    text = "Then I picked up a [MASK] from the table."
+    text = "I was told to shove is right into my [MASK]."
     print(f"Text: {text}")
     # text = input("Text: ")
 
@@ -43,43 +48,30 @@ def main():
     visualize_attentions(inputs.tokens(), result.attentions)
 
 
-def get_mask_token_index(mask_token_id: int, inputs: dict[tf.Tensor]):
+def get_mask_token_index(mask_token_id: int, inputs: dict[tf.Tensor]) -> int | None:
     """
     Return the index of the token with the specified `mask_token_id`, or
     `None` if not present in the `inputs`.
     """
-    tokenizer = AutoTokenizer.from_pretrained(MODEL)
-
-    # Get the token IDs from the inputs dictionary
-    sequence_ids = inputs["input_ids"][0]
-    tokens = tokenizer.convert_ids_to_tokens(sequence_ids.numpy())
-
-    for i, token in enumerate(tokens):
-        if str(token) == "[MASK]":
-            return i
-    return None
-
-    # # Get the token IDs from the inputs dictionary
-    # input_ids = inputs["input_ids"][0]
-
-    # # Find the coordinates of all elements that match the mask_token_id
-    # mask_indices = tf.where(tf.equal(input_ids, mask_token_id))
-
-    # # If the mask token is present, return the first index, otherwise return -1
-    # # Note: tf.where returns a tensor of coordinates, so we get the first one.
-    # if tf.shape(mask_indices)[0] > 0:
-    #     return mask_indices[0][0]
-    # else:
-    #     return tf.constant(-1, dtype=tf.int64)
+    inputs_ids = inputs["input_ids"]
+    indices_tensor = tf.where(tf.equal(inputs_ids, mask_token_id))
+    indices_list = tf.squeeze(indices_tensor).numpy().tolist()
+    if len(indices_list) > 0:
+        mask_token_id_index = indices_list[-1]
+        return mask_token_id_index
+    else:
+        return None
 
 
-def get_color_for_attention_score(attention_score):
+def get_color_for_attention_score(attention_score: tf.Tensor) -> tuple[int]:
     """
     Return a tuple of three integers representing a shade of gray for the
     given `attention_score`. Each value should be in the range [0, 255].
     """
-    # TODO: Implement this function
-    raise NotImplementedError
+    byte_size = 255
+    grey_pct: float = attention_score.numpy().tolist()
+    rgb = round(byte_size * grey_pct)
+    return (rgb, rgb, rgb)
 
 
 def visualize_attentions(tokens, attentions):

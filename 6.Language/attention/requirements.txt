@@ -1,3 +1,4 @@
 pillow
-tensorflow
-transformers
+tensorflow==2.19.1
+transformers==4.49.0
+tf_keras
